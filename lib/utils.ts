@@ -6,15 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(price / 100);
-}
-
-export function formatPriceBDT(price: number): string {
   return new Intl.NumberFormat('bn-BD', {
     style: 'currency',
     currency: 'BDT',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(price);
+}
+
+export function formatPriceBDT(price: number): string {
+  return formatPrice(price);
 }

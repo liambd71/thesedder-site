@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types/database";
-import { BookOpen, PlayCircle } from "lucide-react";
+import { BookOpen, PlayCircle, ShoppingCart } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -43,12 +43,17 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.author && (
           <p className="text-sm text-muted-foreground mb-2">by {product.author}</p>
         )}
-        <p className="font-bold text-lg text-primary">{formatPrice(product.price)}</p>
+        <p className="font-bold text-lg">{formatPrice(product.price)}</p>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Link href={`/product/${product.slug}`} className="w-full">
+      <CardFooter className="p-4 pt-0 flex gap-2">
+        <Link href={`/product/${product.slug}`} className="flex-1">
           <Button variant="outline" className="w-full" data-testid={`button-view-${product.id}`}>
-            View Details
+            Details
+          </Button>
+        </Link>
+        <Link href={`/checkout/${product.id}`}>
+          <Button data-testid={`button-buy-${product.id}`}>
+            <ShoppingCart className="h-4 w-4" />
           </Button>
         </Link>
       </CardFooter>

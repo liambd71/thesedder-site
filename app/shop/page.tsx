@@ -10,29 +10,29 @@ import { Search } from "lucide-react";
 const mockProducts: Product[] = [
   {
     id: "1",
-    type: "ebook",
-    title: "Mastering JavaScript: From Basics to Advanced",
-    slug: "mastering-javascript",
-    description: "A comprehensive guide to JavaScript programming.",
-    price: 2999,
+    type: "course",
+    title: "Complete JavaScript Mastery",
+    slug: "complete-javascript-mastery",
+    description: "A comprehensive guide to JavaScript programming from basics to advanced concepts.",
+    price: 2500,
     cover_image: null,
-    author: "John Developer",
-    page_count: 450,
-    duration: null,
+    author: "TheSedder",
+    page_count: null,
+    duration: "15 hours",
     published: true,
     created_at: new Date().toISOString(),
   },
   {
     id: "2",
     type: "course",
-    title: "Complete React Developer Course 2024",
-    slug: "complete-react-course",
+    title: "React for Beginners",
+    slug: "react-for-beginners",
     description: "Build modern web applications with React.",
-    price: 4999,
+    price: 1800,
     cover_image: null,
-    author: "Sarah Tech",
+    author: "TheSedder",
     page_count: null,
-    duration: "20 hours",
+    duration: "12 hours",
     published: true,
     created_at: new Date().toISOString(),
   },
@@ -41,10 +41,10 @@ const mockProducts: Product[] = [
     type: "ebook",
     title: "The Art of Clean Code",
     slug: "art-of-clean-code",
-    description: "Write maintainable, scalable code.",
-    price: 1999,
+    description: "Write maintainable, scalable code that stands the test of time.",
+    price: 450,
     cover_image: null,
-    author: "Michael Clean",
+    author: "TheSedder",
     page_count: 280,
     duration: null,
     published: true,
@@ -53,12 +53,12 @@ const mockProducts: Product[] = [
   {
     id: "4",
     type: "course",
-    title: "Node.js Backend Masterclass",
-    slug: "nodejs-backend-masterclass",
-    description: "Build scalable backend systems with Node.js.",
-    price: 5999,
+    title: "Web Development Fundamentals",
+    slug: "web-development-fundamentals",
+    description: "Learn HTML, CSS, and JavaScript from scratch.",
+    price: 3200,
     cover_image: null,
-    author: "Backend Pro",
+    author: "TheSedder",
     page_count: null,
     duration: "25 hours",
     published: true,
@@ -94,7 +94,7 @@ export default function ShopPage({ searchParams }: ShopPageProps) {
           <div className="container mx-auto px-4">
             <h1 className="text-3xl font-bold mb-2">Shop</h1>
             <p className="text-muted-foreground">
-              Browse our collection of premium eBooks and courses
+              Browse our collection of premium eBooks and courses. All prices in BDT.
             </p>
           </div>
         </section>

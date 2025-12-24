@@ -1,4 +1,6 @@
 export type ProductType = 'ebook' | 'course';
+export type OrderStatus = 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+export type PaymentGateway = 'sslcommerz' | 'bkash' | 'nagad' | 'rocket';
 
 export interface Profile {
   id: string;
@@ -47,19 +49,28 @@ export interface CourseLesson {
 
 export interface Order {
   id: string;
-  user_id: string;
+  user_id: string | null;
   product_id: string;
+  transaction_id: string;
   amount: number;
-  status: 'pending' | 'completed' | 'failed';
-  stripe_session_id: string | null;
+  currency: string;
+  status: OrderStatus;
+  payment_gateway: PaymentGateway;
+  payment_method: string | null;
+  bank_transaction_id: string | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Purchase {
   id: string;
   user_id: string;
   product_id: string;
-  created_at: string;
+  order_id: string;
+  purchased_at: string;
 }
 
 export interface ContactMessage {
@@ -74,4 +85,36 @@ export interface ProductWithModules extends Product {
   course_modules?: (CourseModule & {
     course_lessons?: CourseLesson[];
   })[];
+}
+
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: Profile;
+        Insert: Omit<Profile, 'id' | 'created_at'>;
+        Update: Partial<Omit<Profile, 'id'>>;
+      };
+      products: {
+        Row: Product;
+        Insert: Omit<Product, 'id' | 'created_at'>;
+        Update: Partial<Omit<Product, 'id'>>;
+      };
+      orders: {
+        Row: Order;
+        Insert: Omit<Order, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Order, 'id'>>;
+      };
+      purchases: {
+        Row: Purchase;
+        Insert: Omit<Purchase, 'id'>;
+        Update: Partial<Omit<Purchase, 'id'>>;
+      };
+      contact_messages: {
+        Row: ContactMessage;
+        Insert: Omit<ContactMessage, 'id' | 'created_at'>;
+        Update: Partial<Omit<ContactMessage, 'id'>>;
+      };
+    };
+  };
 }
