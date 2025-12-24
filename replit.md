@@ -45,13 +45,18 @@ npx next dev -p 5000
 ```
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-STRIPE_SECRET_KEY=your-stripe-secret-key
-STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key
+SSLCOMMERZ_STORE_ID=your-sslcommerz-store-id
+SSLCOMMERZ_STORE_PASSWORD=your-sslcommerz-store-password
+SSLCOMMERZ_IS_LIVE=false
+NEXT_PUBLIC_APP_URL=your-app-url
 ```
 
-## Stripe Integration Note
-User dismissed Stripe connector during setup. Manual Stripe API key configuration required for payment functionality.
+## Payment Integration (SSLCOMMERZ - Bangladesh Only)
+- Payment gateway: SSLCOMMERZ (primary)
+- Supported methods: VISA/Mastercard, bKash, Nagad, Rocket, and 30+ banks
+- Currency: BDT only
+- No refunds policy
+- Modular architecture allows adding more BD gateways (bKash direct, Nagad direct, etc.)
 
 ## Recent Changes (Dec 24, 2024)
 - Initial project setup with Next.js 14

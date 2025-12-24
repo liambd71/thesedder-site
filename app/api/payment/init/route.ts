@@ -1,15 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { initPayment } from '@/lib/payment';
 import { createClient } from '@/lib/supabase/server';
+import { getProductById } from '@/lib/products';
+
+const paymentInitSchema = z.object({
+  productId: z.string().min(1, 'Product ID is required'),
+  customerName: z.string().min(1, 'Name is required'),
+  customerEmail: z.string().email('Valid email is required'),
+  customerPhone: z.string().min(10, 'Valid phone number is required'),
+  customerAddress: z.string().optional(),
+  customerCity: z.string().optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { productId, productName, productCategory, amount, customerName, customerEmail, customerPhone, customerAddress, customerCity } = body;
-
-    if (!productId || !amount || !customerName || !customerEmail || !customerPhone) {
+    
+    const validation = paymentInitSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: validation.error.errors[0]?.message || 'Invalid input' },
+        { status: 400 }
+      );
+    }
+
+    const { productId, customerName, customerEmail, customerPhone, customerAddress, customerCity } = validation.data;
+
+    const product = getProductById(productId);
+    if (!product) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
+    }
+
+    if (!product.published) {
+      return NextResponse.json(
+        { error: 'Product is not available' },
         { status: 400 }
       );
     }
@@ -23,10 +51,10 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await initPayment({
-      amount,
-      productId,
-      productName: productName || 'Digital Product',
-      productCategory: productCategory || 'Digital Content',
+      amount: product.price,
+      productId: product.id,
+      productName: product.title,
+      productCategory: product.type === 'course' ? 'Online Course' : 'eBook',
       customerName,
       customerEmail,
       customerPhone,
@@ -37,9 +65,9 @@ export async function POST(request: NextRequest) {
     if (result.success && result.transactionId && supabase) {
       await supabase.from('orders').insert({
         user_id: userId,
-        product_id: productId,
+        product_id: product.id,
         transaction_id: result.transactionId,
-        amount,
+        amount: product.price,
         currency: 'BDT',
         status: 'pending',
         payment_gateway: 'sslcommerz',

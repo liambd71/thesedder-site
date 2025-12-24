@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentGateway } from '@/lib/payment';
 import { createClient } from '@/lib/supabase/server';
+import { getProductById } from '@/lib/products';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,9 +9,14 @@ export async function POST(request: NextRequest) {
     const tran_id = formData.get('tran_id') as string;
     const val_id = formData.get('val_id') as string;
     const status = formData.get('status') as string;
+    const amount = parseFloat(formData.get('amount') as string) || 0;
     const value_a = formData.get('value_a') as string;
 
-    console.log('Payment success callback:', { tran_id, val_id, status, value_a });
+    console.log('Payment success callback:', { tran_id, val_id, status, amount, value_a });
+
+    if (!tran_id) {
+      return NextResponse.redirect(new URL('/payment/failed', request.url));
+    }
 
     if (status === 'VALID' && val_id) {
       const gateway = getPaymentGateway('sslcommerz');
@@ -29,6 +35,25 @@ export async function POST(request: NextRequest) {
               .single();
 
             if (order) {
+              const product = getProductById(order.product_id);
+              if (!product || Math.abs(validation.amount - product.price) > 1) {
+                console.error('Amount mismatch detected:', {
+                  expected: product?.price,
+                  received: validation.amount,
+                  transactionId: tran_id,
+                });
+                
+                await supabase
+                  .from('orders')
+                  .update({
+                    status: 'failed',
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('transaction_id', tran_id);
+                
+                return NextResponse.redirect(new URL('/payment/failed?reason=amount_mismatch', request.url));
+              }
+
               await supabase
                 .from('orders')
                 .update({

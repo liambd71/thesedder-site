@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentGateway } from '@/lib/payment';
 import { createClient } from '@/lib/supabase/server';
+import { getProductById } from '@/lib/products';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +12,10 @@ export async function POST(request: NextRequest) {
     const value_a = formData.get('value_a') as string;
 
     console.log('IPN received:', { tran_id, val_id, status, value_a });
+
+    if (!tran_id) {
+      return NextResponse.json({ received: false, error: 'Missing transaction ID' }, { status: 400 });
+    }
 
     if (status === 'VALID' && val_id) {
       const gateway = getPaymentGateway('sslcommerz');
@@ -29,6 +34,26 @@ export async function POST(request: NextRequest) {
               .single();
 
             if (order && order.status !== 'completed') {
+              const product = getProductById(order.product_id);
+              
+              if (!product || Math.abs(validation.amount - product.price) > 1) {
+                console.error('IPN: Amount mismatch detected:', {
+                  expected: product?.price,
+                  received: validation.amount,
+                  transactionId: tran_id,
+                });
+                
+                await supabase
+                  .from('orders')
+                  .update({
+                    status: 'failed',
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('transaction_id', tran_id);
+                
+                return NextResponse.json({ received: true, error: 'Amount mismatch' });
+              }
+
               await supabase
                 .from('orders')
                 .update({

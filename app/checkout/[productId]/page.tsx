@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -9,22 +9,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CreditCard, Smartphone, Lock, ShieldCheck } from 'lucide-react';
+import { Loader2, CreditCard, Smartphone, Lock, ShieldCheck, BookOpen, PlayCircle } from 'lucide-react';
+import { formatPrice } from '@/lib/utils';
 
-const mockProducts: Record<string, { id: string; title: string; price: number; type: string; author: string }> = {
-  '1': { id: '1', title: 'Complete JavaScript Mastery', price: 2500, type: 'course', author: 'TheSedder' },
-  '2': { id: '2', title: 'React for Beginners', price: 1800, type: 'course', author: 'TheSedder' },
-  '3': { id: '3', title: 'The Art of Clean Code', price: 450, type: 'ebook', author: 'TheSedder' },
-  '4': { id: '4', title: 'Web Development Fundamentals', price: 3200, type: 'course', author: 'TheSedder' },
-};
+interface Product {
+  id: string;
+  title: string;
+  price: number;
+  type: string;
+  author: string;
+  description: string;
+}
 
 export default function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
   const productId = params.productId as string;
-  const product = mockProducts[productId];
 
+  const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -32,6 +36,35 @@ export default function CheckoutPage() {
     address: '',
     city: '',
   });
+
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const res = await fetch(`/api/products/${productId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProduct(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch product:', error);
+      } finally {
+        setPageLoading(false);
+      }
+    }
+    fetchProduct();
+  }, [productId]);
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -59,9 +92,6 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: product.id,
-          productName: product.title,
-          productCategory: product.type === 'course' ? 'Online Course' : 'eBook',
-          amount: product.price,
           customerName: formData.name,
           customerEmail: formData.email,
           customerPhone: formData.phone,
@@ -83,14 +113,6 @@ export default function CheckoutPage() {
       alert('Something went wrong. Please try again.');
       setLoading(false);
     }
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('bn-BD', {
-      style: 'currency',
-      currency: 'BDT',
-      minimumFractionDigits: 0,
-    }).format(price);
   };
 
   return (
@@ -202,7 +224,11 @@ export default function CheckoutPage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-start gap-4">
                     <div className="w-16 h-20 bg-muted rounded flex items-center justify-center">
-                      <span className="text-2xl">{product.type === 'course' ? '🎓' : '📚'}</span>
+                      {product.type === 'course' ? (
+                        <PlayCircle className="w-8 h-8 text-muted-foreground" />
+                      ) : (
+                        <BookOpen className="w-8 h-8 text-muted-foreground" />
+                      )}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold" data-testid="text-product-title">{product.title}</h3>
