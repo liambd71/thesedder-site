@@ -1,16 +1,202 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import type { Server } from "http";
 import { storage } from "./storage";
+import { api } from "@shared/routes";
+
+const CHAPTER_CONTENT = `# চ্যাপ্টার ৬  
+## যেখানে মানুষ ভেঙে যায়—আর যেভাবে আবার ফিরে আসে
+
+এই চ্যাপ্টারটা দুই ধরনের মানুষের জন্য।
+
+এক—
+যারা ৩০ দিন ধরে কিছু করার চেষ্টা করেছে।
+
+দুই—
+যারা শুরু করেছিল,  
+কিন্তু মাঝখানে কোথাও থেমে গেছে।
+
+যদি তুমি দ্বিতীয় দলে হও—  
+এই বইটা এখানেই শেষ না।
+
+---
+
+### আগে একটা কথা পরিষ্কার করি
+
+থেমে যাওয়া মানে  
+তুমি দুর্বল—না।
+
+ভয় পাওয়া মানে  
+তুমি ভুল করছো—না।
+
+এই দুইটাই স্বাভাবিক।
+
+কারণ তুমি এমন কিছু করছিলে  
+যেটা তোমার জন্য নতুন।
+
+---
+
+## যদি তুমি মাঝপথে থেমে গিয়ে থাকো
+
+চলো, সত্য কথা বলি।
+
+তুমি থেমে গেছো কারণ—
+- কেউ রিপ্লাই দেয়নি  
+- নিজের কাজ ভালো লাগেনি  
+- মনে হয়েছে সময় নষ্ট হচ্ছে  
+- পুরোনো ভয় ফিরে এসেছে  
+
+এই জায়গায় মানুষ সাধারণত দুইটা ভুল করে।
+
+এক—
+নিজেকে দোষ দেয়।
+
+দুই—
+সব ছেড়ে দেয়।
+
+এই দুটোই দরকার নেই।
+
+---
+
+### এখানে তোমার কাজ কী?
+
+খুব ছোট একটা কাজ।
+
+**তুমি যেদিন থেমেছিলে,  
+সেই জায়গা থেকেই আবার শুরু করো।**
+
+নতুন কিছু না।  
+নতুন প্ল্যান না।  
+নতুন আইডিয়া না।
+
+শুধু আগের কাজটা  
+আর ২০–৩০ মিনিট।
+
+এইটাই comeback।
+
+---
+
+## যদি তুমি ৩০ দিন পার করে থাকো
+
+তাহলে একটা কথা আগে বলি—
+
+তুমি এখনো সফল হওনি,  
+কিন্তু তুমি আর আগের জায়গায় নেই।
+
+এখন তোমার সবচেয়ে বড় সম্পদ—
+**ধারাবাহিকতা।**
+
+এইটা হারালে  
+সব আবার শুরু থেকে হবে।
+
+---
+
+### এখন তোমার সামনে দুইটা পথ
+
+এক—
+এই একই পথে  
+আর ৩০ দিন এগোবে।
+
+দুই—
+এই পথটা তোমার না বুঝে  
+শান্তভাবে বদলাবে।
+
+দুটোই ঠিক।
+
+ভুল শুধু একটাই—
+চুপচাপ থেমে যাওয়া।
+
+---
+
+## খুব গুরুত্বপূর্ণ একটা সত্য
+
+টাকা এখানে পুরস্কার না।  
+টাকা এখানে **সংকেত**।
+
+সংকেত যে—
+- কেউ আগ্রহী  
+- কেউ প্রশ্ন করছে  
+- কেউ রিপ্লাই দিচ্ছে  
+
+এই সংকেত না এলে  
+মানে এই না—তুমি ব্যর্থ।
+
+মানে—
+পথটা ঠিক করতে হবে।
+
+---
+
+## এই জায়গায় সবচেয়ে কমন ভুলগুলো
+
+- হঠাৎ পথ বদলে ফেলা  
+- একসাথে দুইটা কাজ শুরু  
+- অন্যের ফলের সাথে তুলনা  
+- “আমি পারি না” এই সিদ্ধান্ত
+
+এইগুলো আসলে  
+ভয়ের ভাষা।
+
+ভয় মানে—
+তুমি চেষ্টা করছো।
+
+---
+
+## একটা কথা খুব আস্তে বলি
+
+এই বইটা তোমাকে  
+জোর করে এগিয়ে নিতে চায় না।
+
+এই বইটা শুধু বলে—
+
+**থামলেও ফিরে আসা যায়।**
+
+আর যারা ফিরে আসতে শেখে,  
+তারাই শেষ পর্যন্ত  
+দূরে যায়।
+
+---
+
+এই বইয়ের শেষ চ্যাপ্টারে  
+আমি আর পথ দেখাবো না।
+
+আমি শুধু কিছু কথা বলবো—  
+যেগুলো কেউ তোমাকে বলেনি।
+
+সেই জায়গা থেকেই  
+আমরা শেষ করবো।`;
+
+async function seedDatabase() {
+  const existingChapters = await storage.getChapters();
+  if (existingChapters.length === 0) {
+    await storage.createChapter({
+      title: "চ্যাপ্টার ৬",
+      subtitle: "যেখানে মানুষ ভেঙে যায়—আর যেভাবে আবার ফিরে আসে",
+      content: CHAPTER_CONTENT,
+      order: 1,
+    });
+    console.log("Seeded database with Chapter 6");
+  }
+}
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  // Seed the database on startup
+  await seedDatabase();
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+  app.get(api.chapters.list.path, async (req, res) => {
+    const chapters = await storage.getChapters();
+    res.json(chapters);
+  });
+
+  app.get(api.chapters.get.path, async (req, res) => {
+    const id = Number(req.params.id);
+    const chapter = await storage.getChapter(id);
+    if (!chapter) {
+      return res.status(404).json({ message: "Chapter not found" });
+    }
+    res.json(chapter);
+  });
 
   return httpServer;
 }
