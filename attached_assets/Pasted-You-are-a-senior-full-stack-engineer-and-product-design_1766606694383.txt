@@ -1,0 +1,112 @@
+You are a senior full-stack engineer and product designer.
+
+Build a production-ready website for selling eBooks and video courses.
+Domain name: TheSedder
+
+Tech Stack:
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Supabase (Auth, Database, Storage, RLS)
+- Stripe Checkout for payments
+
+Core Features:
+
+1. Public Pages
+- Home page with hero section, featured eBooks & courses, testimonials, FAQ, CTA
+- Shop/Catalog page with filters (eBook / Course, category, price)
+- Product details page:
+  - eBook: cover, description, author, page count, preview
+  - Course: trailer video, modules, lessons, duration
+- About page
+- Contact page (form saves to Supabase)
+- Terms, Privacy Policy, Refund Policy pages
+
+2. Authentication
+- Email + password signup/login using Supabase Auth
+- Forgot password
+- Redirect logged-in users to Dashboard
+
+3. User Dashboard (Library)
+- My eBooks section
+- My Courses section
+- Only purchased items appear
+- Open/read/watch inside dashboard
+- Profile page (email, password change, logout)
+
+4. Purchase & Access Control
+- Users must log in to buy
+- After successful payment:
+  - create order
+  - create purchase record
+  - unlock access
+- Protect routes:
+  - /library/ebooks/[id]
+  - /library/courses/[id]
+- Non-purchased users see paywall
+
+5. NO DOWNLOAD System (Best Effort)
+eBooks:
+- Render via in-browser reader (PDF/HTML)
+- No direct file links
+- Use short-lived signed URLs (30–60 seconds)
+- Add watermark overlay (user email)
+- Disable right-click & text selection (best effort)
+
+Courses:
+- Stream-only video player
+- Signed URLs for video playback
+- No public storage access
+- Optional email watermark overlay
+
+6. Payments
+- Stripe Checkout integration
+- Webhook to verify payment
+- After webhook success:
+  - save order
+  - grant access
+- Payment system must be modular so Bangladeshi gateways (SSLCOMMERZ/bKash) can be added later
+
+7. Supabase Database Schema
+
+Tables:
+- profiles (id, name, role)
+- products (id, type, title, slug, price, published)
+- ebook_assets (product_id, storage_path)
+- course_modules (course_id, title, order)
+- course_lessons (module_id, title, video_path)
+- orders (user_id, amount, status)
+- purchases (user_id, product_id)
+- contact_messages (name, email, message)
+
+Security:
+- Enable Row Level Security
+- Users can only read their own purchases/orders
+- Products are public only if published=true
+- Storage buckets must be private
+- Signed URLs generated only after authorization check
+
+8. Admin Panel (/admin)
+- Admin-only access
+- Create/edit products
+- Upload eBooks & videos
+- Manage modules and lessons
+- View orders & purchases
+- Publish/unpublish products
+
+9. UX/UI
+- Clean modern design
+- Mobile responsive
+- Bangla-friendly typography
+- Netflix/Kindle-style library UI
+
+10. Output Requirements
+- Full project code
+- Folder structure
+- Supabase SQL migrations
+- RLS policies
+- .env.example
+- Setup & deployment instructions
+- Security limitations explanation
+
+Build the complete system now.
