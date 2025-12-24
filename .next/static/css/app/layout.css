@@ -781,24 +781,24 @@ video {
 }
   :root {
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 240 10% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 10% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --popover-foreground: 240 10% 10%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 160 20% 95%;
+    --secondary-foreground: 160 84% 25%;
+    --muted: 160 20% 96%;
+    --muted-foreground: 240 5% 45%;
+    --accent: 160 20% 92%;
+    --accent-foreground: 160 84% 25%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 160 20% 88%;
+    --input: 160 20% 88%;
+    --ring: 160 84% 39%;
     --radius: 0.5rem;
     --font-sans: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-serif: 'Merriweather', 'Lora', Georgia, serif;
@@ -872,6 +872,10 @@ video {
   margin-left: auto;
   margin-right: auto;
 }
+.my-8 {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
 .mb-1 {
   margin-bottom: 0.25rem;
 }
@@ -896,6 +900,9 @@ video {
 .mr-2 {
   margin-right: 0.5rem;
 }
+.mt-0\.5 {
+  margin-top: 0.125rem;
+}
 .mt-12 {
   margin-top: 3rem;
 }
@@ -914,8 +921,14 @@ video {
 .inline-flex {
   display: inline-flex;
 }
+.table {
+  display: table;
+}
 .grid {
   display: grid;
+}
+.contents {
+  display: contents;
 }
 .hidden {
   display: none;
@@ -994,6 +1007,9 @@ video {
 }
 .flex-1 {
   flex: 1 1 0%;
+}
+.flex-shrink-0 {
+  flex-shrink: 0;
 }
 .-translate-y-1\/2 {
   --tw-translate-y: -50%;
@@ -1099,6 +1115,9 @@ video {
 }
 .border-t {
   border-top-width: 1px;
+}
+.border-destructive\/30 {
+  border-color: hsl(var(--destructive) / 0.3);
 }
 .border-input {
   border-color: hsl(var(--input));

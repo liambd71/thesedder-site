@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { AlertTriangle } from "lucide-react";
 
 export default function RefundPage() {
   return (
@@ -16,50 +17,63 @@ export default function RefundPage() {
         <section className="py-12">
           <div className="container mx-auto px-4">
             <div className="prose prose-lg max-w-3xl mx-auto">
-              <p className="text-muted-foreground">Last updated: January 2024</p>
+              <p className="text-muted-foreground">Last updated: December 2024</p>
               
-              <h2>Our Refund Commitment</h2>
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-6 my-8 not-prose">
+                <div className="flex items-start gap-4">
+                  <AlertTriangle className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-bold text-lg text-foreground mb-2">No Refund Policy</h3>
+                    <p className="text-muted-foreground">
+                      All sales on TheSedder are final. We do not offer refunds for any digital 
+                      products including eBooks and video courses. Please review product descriptions 
+                      carefully before making a purchase.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <h2>Why No Refunds?</h2>
               <p>
-                At TheSedder, we want you to be completely satisfied with your purchase. 
-                If you're not happy with a product, we offer a straightforward refund policy.
+                Due to the digital nature of our products (eBooks and video courses), all purchases 
+                are final and non-refundable. Once you have access to the digital content, it cannot 
+                be "returned" in the traditional sense.
               </p>
 
-              <h2>7-Day Refund Window</h2>
-              <p>
-                You may request a refund within 7 days of your purchase date. After this 
-                period, refunds are provided at our discretion on a case-by-case basis.
-              </p>
-
-              <h2>Eligibility</h2>
-              <p>To be eligible for a refund:</p>
+              <h2>Before You Purchase</h2>
+              <p>We encourage you to:</p>
               <ul>
-                <li>Request must be made within 7 days of purchase</li>
-                <li>You must provide a valid reason for the refund</li>
-                <li>The product must not have been substantially consumed (e.g., more than 30% of a course watched)</li>
+                <li>Read the full product description carefully</li>
+                <li>Review the table of contents or curriculum</li>
+                <li>Check the preview content when available</li>
+                <li>Ensure the content matches your learning goals</li>
+                <li>Verify your device compatibility</li>
               </ul>
 
-              <h2>How to Request a Refund</h2>
+              <h2>Technical Issues</h2>
               <p>
-                To request a refund, please contact our support team at refunds@thesedder.com 
-                with your order number and reason for the refund request.
+                If you experience technical difficulties accessing your purchased content, please 
+                contact our support team at support@thesedder.com. We will work with you to 
+                resolve any access issues promptly.
               </p>
 
-              <h2>Processing Time</h2>
+              <h2>Duplicate Purchases</h2>
               <p>
-                Refund requests are typically processed within 5-7 business days. Once approved, 
-                the refund will be issued to your original payment method within 3-5 business days.
+                If you accidentally purchase the same product twice, please contact us immediately 
+                at support@thesedder.com with your order details. We will review your case and 
+                may provide store credit at our discretion.
               </p>
 
-              <h2>Non-Refundable Items</h2>
+              <h2>Payment Region</h2>
               <p>
-                Promotional or discounted items may have different refund terms, which will be 
-                clearly stated at the time of purchase.
+                Please note that our payment system currently only supports customers in Bangladesh. 
+                Payment methods available are tailored for Bangladeshi customers.
               </p>
 
               <h2>Questions?</h2>
               <p>
-                If you have any questions about our refund policy, please contact us at 
-                support@thesedder.com.
+                If you have any questions about our refund policy or need assistance before 
+                making a purchase, please contact us at support@thesedder.com.
               </p>
             </div>
           </div>
