@@ -9,7 +9,14 @@ const { data: order, error: fetchError } = await supabase
   .from('orders')
   .select('id,status,user_id,product_id')
   .eq('id', orderId)
-  .maybeSingle<OrderRow>();
+  const { data, error: fetchError } = await supabase
+    .from('orders')
+    .select('id,status,user_id,product_id')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  const order = data as OrderRow | null;
+
 
 if (fetchError) {
   return NextResponse.json({ error: fetchError.message }, { status: 500 });
