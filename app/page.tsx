@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { BookOpen, PlayCircle, Star, ShieldCheck, Download, Users } from "lucide-react";
+import { FAQSection } from "@/components/faq-section";
+import { BookOpen, PlayCircle, Star, ShieldCheck, Users } from "lucide-react";
 
 const features = [
   {
@@ -49,24 +50,6 @@ const testimonials = [
   },
 ];
 
-const faqs = [
-  {
-    question: "How do I access my purchases?",
-    answer: "After purchase, your content will be available in your Library. Simply log in and visit 'My Library' to access your eBooks and courses.",
-  },
-  {
-    question: "Can I download the content?",
-    answer: "To protect our creators, content is accessible through our secure reader/player. This ensures quality and prevents unauthorized distribution.",
-  },
-  {
-    question: "What payment methods do you accept?",
-    answer: "We accept major credit cards through Stripe. More payment options including local methods will be added soon.",
-  },
-  {
-    question: "Do you offer refunds?",
-    answer: "Yes, we offer refunds within 7 days of purchase if you're not satisfied. See our refund policy for details.",
-  },
-];
 
 export default function HomePage() {
   return (
@@ -140,21 +123,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="py-16 md:py-24">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-            <div className="max-w-3xl mx-auto space-y-4">
-              {faqs.map((faq) => (
-                <Card key={faq.question}>
-                  <CardContent className="pt-6">
-                    <h3 className="font-semibold mb-2">{faq.question}</h3>
-                    <p className="text-muted-foreground">{faq.answer}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
+        <FAQSection />
 
         <section className="py-16 md:py-24 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 text-center">
