@@ -5,7 +5,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Menu, User, X } from "lucide-react";
 import { useState } from "react";
-import logoImage from "@assets/the_sedder_main_logo_1766672612999.png";
 
 interface HeaderProps {
   user?: { email: string } | null;
@@ -19,7 +18,7 @@ export function Header({ user }: HeaderProps) {
       <nav className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <Link href="/" className="flex items-center gap-2">
           <Image 
-            src={logoImage} 
+            src="/logo.png" 
             alt="TheSedder" 
             width={120} 
             height={40} 

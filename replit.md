@@ -51,12 +51,14 @@ SSLCOMMERZ_IS_LIVE=false
 NEXT_PUBLIC_APP_URL=your-app-url
 ```
 
-## Payment Integration (SSLCOMMERZ - Bangladesh Only)
-- Payment gateway: SSLCOMMERZ (primary)
-- Supported methods: VISA/Mastercard, bKash, Nagad, Rocket, and 30+ banks
+## Payment Integration (bKash Send Money - Manual Verification)
+- Payment method: bKash Send Money (personal number)
+- bKash Number: 01925545557
+- Reference must be: "E-book"
 - Currency: BDT only
 - No refunds policy
-- Modular architecture allows adding more BD gateways (bKash direct, Nagad direct, etc.)
+- Admin verification required before content access
+- Admin panel at /admin for payment verification
 
 ## Recent Changes (Dec 24, 2024)
 - Initial project setup with Next.js 14
