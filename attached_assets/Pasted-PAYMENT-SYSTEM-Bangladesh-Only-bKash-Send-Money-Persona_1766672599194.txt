@@ -1,0 +1,56 @@
+PAYMENT SYSTEM (Bangladesh Only — bKash Send Money, Personal Number)
+
+Build a manual payment workflow using bKash “Send Money” ONLY (no payment gateway, no cards, no Stripe).
+
+bKash Number (personal): 01925545557
+Payment method: User will send money to this number using bKash “Send Money”.
+
+Checkout / Payment Page Requirements:
+- Show the bKash number clearly with a “Copy” button.
+- Show instructions:
+  1) Open bKash app → Send Money
+  2) Send the exact amount to: 01925545557
+  3) In Reference, user MUST write: E-book (exactly this; case-insensitive allowed)
+  4) After sending, collect the transaction info below and submit the form.
+
+Payment Submission Form (must have these fields):
+- Name (text, required)
+- bKash Account Number (text/phone, required; validate BD format, 11 digits)
+- Reference (text, required) → MUST be exactly “E-book”. If not, show error: “Reference must be E-book, otherwise product will not be delivered.”
+- TrxID (text, required; validate minimum length 8, alphanumeric)
+
+Order Flow:
+- After user submits the form:
+  - Create an order in Supabase with status = “pending_verification”
+  - Save: user_id, product_id(s), amount, Name, bkash_number, reference, trxid, created_at
+  - Show confirmation page: “Payment submitted. Verification in progress.”
+
+Access Control:
+- Do NOT unlock eBook/course immediately after form submission.
+- Only unlock after admin verifies the payment.
+- When verified:
+  - Update order status = “paid”
+  - Create purchase row(s) in Supabase (user_id + product_id)
+  - User can then access content in /library.
+
+Admin Panel (Verification):
+- Admin page shows list of pending payments:
+  - Name, user email, product, amount, bkash number, reference, trxid, submitted time
+- Admin actions:
+  - Approve → mark paid → grant access
+  - Reject → mark rejected (optional reason) → no access
+
+Security & Anti-fraud:
+- Prevent duplicate TrxID: enforce unique constraint on trxid in DB.
+- Prevent users from editing amount/product after submission:
+  - Store expected amount from product price at checkout time.
+- Log verification actions (admin_id, timestamp).
+- Keep all Supabase Storage buckets private; content is accessible only to purchased users.
+
+UI Copy (Bangla-friendly):
+- “Reference অবশ্যই E-book লিখতে হবে—না হলে প্রোডাক্ট ডেলিভারি/অ্যাক্সেস পাওয়া যাবে না।”
+
+Implement using:
+- Next.js 14 + TypeScript + Tailwind
+- Supabase Auth + DB + RLS policies
+- Protected routes for /library and /admin

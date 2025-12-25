@@ -1,6 +1,6 @@
 export type ProductType = 'ebook' | 'course';
-export type OrderStatus = 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
-export type PaymentGateway = 'sslcommerz' | 'bkash' | 'nagad' | 'rocket';
+export type OrderStatus = 'pending_verification' | 'paid' | 'rejected' | 'cancelled';
+export type PaymentMethod = 'bkash';
 
 export interface Profile {
   id: string;
@@ -51,16 +51,18 @@ export interface Order {
   id: string;
   user_id: string | null;
   product_id: string;
-  transaction_id: string;
   amount: number;
   currency: string;
   status: OrderStatus;
-  payment_gateway: PaymentGateway;
-  payment_method: string | null;
-  bank_transaction_id: string | null;
+  payment_method: PaymentMethod;
   customer_name: string;
   customer_email: string;
-  customer_phone: string;
+  bkash_number: string;
+  reference: string;
+  trxid: string;
+  rejection_reason: string | null;
+  verified_by: string | null;
+  verified_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Menu, ShoppingCart, User, X } from "lucide-react";
+import { BookOpen, Menu, User, X } from "lucide-react";
 import { useState } from "react";
+import logoImage from "@assets/the_sedder_main_logo_1766672612999.png";
 
 interface HeaderProps {
   user?: { email: string } | null;
@@ -15,9 +17,15 @@ export function Header({ user }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          <BookOpen className="h-6 w-6 text-primary" />
-          <span>TheSedder</span>
+        <Link href="/" className="flex items-center gap-2">
+          <Image 
+            src={logoImage} 
+            alt="TheSedder" 
+            width={120} 
+            height={40} 
+            className="h-10 w-auto"
+            priority
+          />
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
