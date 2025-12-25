@@ -1,0 +1,192 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+type Review = {
+  name: string;
+  title: string; // e.g., Student, Job Holder
+  location: string; // e.g., Dhaka
+  rating: 4 | 5;
+  text: string;
+};
+
+const REVIEWS: Review[] = [
+  {
+    name: "মেহেদী হাসান",
+    title: "স্টুডেন্ট",
+    location: "ঢাকা",
+    rating: 5,
+    text: "TheSedder থেকে ই-বুকটা নেওয়ার পরই বুঝলাম কন্টেন্টটা কতটা গোছানো। ভাষাটা সহজ, উদাহরণগুলো বাস্তব। সবচেয়ে ভালো লেগেছে—ভেতরে ঢুকে পড়তে পারি, কিন্তু ডাউনলোড অপশন না থাকায় কন্টেন্ট নিরাপদ থাকে।",
+  },
+  {
+    name: "তামান্না আক্তার",
+    title: "জব হোল্ডার",
+    location: "চট্টগ্রাম",
+    rating: 5,
+    text: "আমি রাতে কাজের পরে কোর্স দেখি। ড্যাশবোর্ডে লগইন করে আগের জায়গা থেকেই কন্টিনিউ করতে পারি—খুব সুবিধা। ভিডিওগুলো ছোট ছোট, কাজে লাগে এমন টিপস বেশি।",
+  },
+  {
+    name: "রিফাত ইসলাম",
+    title: "ফ্রিল্যান্সার",
+    location: "রাজশাহী",
+    rating: 5,
+    text: "আগে অনেক জায়গা থেকে কিনেছি, কিন্তু এখানে কাস্টমার সাপোর্ট ভালো। পেমেন্ট সাবমিট করার পর ভেরিফাই হয়ে অ্যাক্সেস পেয়েছি—সবকিছু ক্লিয়ার ছিল।",
+  },
+  {
+    name: "নুসরাত জাহান",
+    title: "হাউসওয়াইফ",
+    location: "নারায়ণগঞ্জ",
+    rating: 5,
+    text: "আমি নতুন করে শেখা শুরু করেছি। ই-বুকের লেখা খুব সহজ, আর ভিতরে থেকেই পড়তে পারি। একদম ফ্রেন্ডলি মনে হয়েছে।",
+  },
+  {
+    name: "সাকিব আহমেদ",
+    title: "স্টুডেন্ট",
+    location: "সিলেট",
+    rating: 4,
+    text: "কোর্সের লেসনগুলো ছোট হওয়ায় দ্রুত শেষ করতে পেরেছি। আরেকটু বেশি প্র্যাকটিস ফাইল থাকলে আরও ভালো হতো। তবুও ভ্যালু ফর মানি।",
+  },
+  {
+    name: "ফারহান কবির",
+    title: "এন্টারপ্রেনার",
+    location: "খুলনা",
+    rating: 5,
+    text: "কন্টেন্টগুলো একদম কাজের। যেভাবে স্টেপ বাই স্টেপ বোঝানো—আমি সেটা আমার বিজনেসে অ্যাপ্লাই করেছি।",
+  },
+  {
+    name: "মিতু রানী",
+    title: "কলেজ স্টুডেন্ট",
+    location: "কুমিল্লা",
+    rating: 5,
+    text: "ই-বুকটা খুব সুন্দরভাবে সাজানো। পড়তে পড়তে মনে হয়েছে কেউ হাতে ধরে শেখাচ্ছে।",
+  },
+  {
+    name: "আব্দুল্লাহ আল মামুন",
+    title: "জব সিকার",
+    location: "ময়মনসিংহ",
+    rating: 4,
+    text: "ড্যাশবোর্ড সিস্টেমটা ভালো। মোবাইলেও ঠিকমতো চলে। কিছু ভিডিওতে সাবটাইটেল থাকলে আরও ভালো লাগত।",
+  },
+  {
+    name: "সাদিয়া আফরিন",
+    title: "কনটেন্ট ক্রিয়েটর",
+    location: "ঢাকা",
+    rating: 5,
+    text: "আমি রিভিউ কম দিই, কিন্তু এখানে সত্যিই ভালো লেগেছে। কন্টেন্ট প্র্যাকটিক্যাল আর আপডেটেড।",
+  },
+  {
+    name: "নাঈম হোসেন",
+    title: "ফ্রিল্যান্সার",
+    location: "বরিশাল",
+    rating: 5,
+    text: "সবচেয়ে ভালো—কিনার পর নিজের লাইব্রেরিতে সব থাকে। বারবার খুঁজতে হয় না।",
+  },
+  {
+    name: "ইশতিয়াক রহমান",
+    title: "স্টুডেন্ট",
+    location: "রংপুর",
+    rating: 5,
+    text: "যেভাবে উদাহরণ দেওয়া আছে, সেটা বাংলাদেশের কনটেক্সটে—এইটাই বড় পার্থক্য।",
+  },
+  {
+    name: "জান্নাতুল ফেরদৌস",
+    title: "জব হোল্ডার",
+    location: "গাজীপুর",
+    rating: 5,
+    text: "ভেরিফিকেশন সিস্টেমটা ট্রান্সপারেন্ট। আমি ঠিকঠাক Reference ‘E-book’ দিয়েছি—তারপর দ্রুত অ্যাক্সেস পেয়েছি।",
+  },
+  {
+    name: "রাকিবুল ইসলাম",
+    title: "ডিজাইনার",
+    location: "চট্টগ্রাম",
+    rating: 4,
+    text: "UI খুব ক্লিন। রিভিউ সেকশন ঘুরে ঘুরে দেখায়—দেখতেও সুন্দর লাগে।",
+  },
+  {
+    name: "সুমাইয়া খাতুন",
+    title: "স্টুডেন্ট",
+    location: "বগুড়া",
+    rating: 5,
+    text: "কোর্স শেষ করে আমার কনফিডেন্স বেড়েছে। আগে ভয় লাগত শুরু করতে—এখানে সহজ করে দিয়েছে।",
+  },
+  {
+    name: "হাসিবুর রহমান",
+    title: "জব হোল্ডার",
+    location: "ঢাকা",
+    rating: 5,
+    text: "অনেক জায়গায় কন্টেন্ট ফাঁপা থাকে। এখানে টপিকগুলো টু দ্য পয়েন্ট। আমার টাইম বাঁচিয়েছে।",
+  },
+];
+
+function Stars({ rating }: { rating: number }) {
+  return (
+    <div className="flex gap-1" aria-label={`${rating} star rating`}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <span key={i} className={i < rating ? "text-yellow-400" : "text-gray-300"}>
+          ★
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export default function TestimonialsRotating3() {
+  const showCount = 3;
+  const intervalMs = 4500; // rotate every 4.5s
+
+  const [startIndex, setStartIndex] = useState(0);
+
+  // Make sure we always have enough reviews
+  const reviews = useMemo(() => REVIEWS, []);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setStartIndex((prev) => (prev + showCount) % reviews.length);
+    }, intervalMs);
+
+    return () => clearInterval(t);
+  }, [reviews.length]);
+
+  const visible = useMemo(() => {
+    const out: Review[] = [];
+    for (let i = 0; i < showCount; i++) {
+      out.push(reviews[(startIndex + i) % reviews.length]);
+    }
+    return out;
+  }, [reviews, startIndex]);
+
+  return (
+    <section className="w-full py-16">
+      <div className="mx-auto max-w-6xl px-4">
+        <h2 className="text-center text-3xl font-bold">What Our Learners Say</h2>
+        <p className="mt-2 text-center text-gray-600">
+          বাংলাদেশের বাস্তব লার্নারদের ফিডব্যাক (রোটেটিং রিভিউ)
+        </p>
+
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
+          {visible.map((r, idx) => (
+            <div
+              key={`${r.name}-${startIndex}-${idx}`}
+              className="rounded-xl border bg-white p-6 shadow-sm transition-all duration-500"
+            >
+              <Stars rating={r.rating} />
+
+              <p className="mt-4 text-gray-700 leading-relaxed">“{r.text}”</p>
+
+              <div className="mt-6">
+                <div className="font-semibold text-gray-900">{r.name}</div>
+                <div className="text-sm text-gray-500">
+                  {r.title} • {r.location}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 text-center text-xs text-gray-400">
+          রিভিউগুলো প্রতি {Math.round(intervalMs / 1000)} সেকেন্ড পর পর অটো রোটেট হবে।
+        </div>
+      </div>
+    </section>
+  );
+}

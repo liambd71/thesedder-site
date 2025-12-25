@@ -15,14 +15,14 @@ export function Header({ user }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
+      <nav className="container mx-auto flex items-center justify-between gap-4 px-4 py-2">
         <Link href="/" className="flex items-center gap-2">
           <Image 
             src="/logo.png" 
             alt="TheSedder" 
-            width={120} 
-            height={40} 
-            className="h-10 w-auto"
+            width={360} 
+            height={120} 
+            className="h-[120px] w-auto"
             priority
           />
         </Link>

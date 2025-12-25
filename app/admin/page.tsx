@@ -177,8 +177,8 @@ export default function AdminPage() {
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4 text-muted-foreground" />
                         <div>
-                          <p className="text-xs text-muted-foreground">bKash Number</p>
-                          <p className="font-medium">{order.bkash_number}</p>
+                          <p className="text-xs text-muted-foreground">Sender ({order.payment_method})</p>
+                          <p className="font-medium">{order.sender_number}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

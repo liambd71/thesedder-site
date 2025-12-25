@@ -12,8 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Copy, Check, Smartphone, BookOpen, PlayCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
-
-const BKASH_NUMBER = '01925545557';
+import type { PaymentSetting, PaymentMethod } from '@/types/database';
 
 interface Product {
   id: string;
@@ -24,12 +23,20 @@ interface Product {
   description: string;
 }
 
+const methodColors: Record<PaymentMethod, { bg: string; text: string }> = {
+  bkash: { bg: 'bg-pink-50 dark:bg-pink-950/30', text: 'text-pink-600' },
+  nagad: { bg: 'bg-orange-50 dark:bg-orange-950/30', text: 'text-orange-600' },
+  rocket: { bg: 'bg-purple-50 dark:bg-purple-950/30', text: 'text-purple-600' },
+};
+
 export default function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
   const productId = params.productId as string;
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentSetting[]>([]);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentSetting | null>(null);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -38,40 +45,54 @@ export default function CheckoutPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    bkashNumber: '',
+    senderNumber: '',
     reference: '',
     trxid: '',
   });
 
   useEffect(() => {
-    async function fetchProduct() {
+    async function fetchData() {
       try {
-        const res = await fetch(`/api/products/${productId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProduct(data);
+        const [productRes, settingsRes] = await Promise.all([
+          fetch(`/api/products/${productId}`),
+          fetch('/api/payment/settings')
+        ]);
+        
+        if (productRes.ok) {
+          const productData = await productRes.json();
+          setProduct(productData);
+        }
+        
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          if (settingsData.success && settingsData.paymentMethods?.length > 0) {
+            setPaymentMethods(settingsData.paymentMethods);
+            setSelectedMethod(settingsData.paymentMethods[0]);
+          }
         }
       } catch (error) {
-        console.error('Failed to fetch product:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setPageLoading(false);
       }
     }
-    fetchProduct();
+    fetchData();
   }, [productId]);
 
-  const copyBkashNumber = async () => {
-    await navigator.clipboard.writeText(BKASH_NUMBER);
+  const copyAccountNumber = async () => {
+    if (!selectedMethod) return;
+    await navigator.clipboard.writeText(selectedMethod.account_number);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const validateBkashNumber = (num: string) => {
+  const validateSenderNumber = (num: string) => {
     return /^01[3-9]\d{8}$/.test(num);
   };
 
   const validateReference = (ref: string) => {
-    return ref.toLowerCase().trim() === 'e-book';
+    if (!selectedMethod) return false;
+    return ref.toLowerCase().trim() === selectedMethod.required_reference.toLowerCase();
   };
 
   const validateTrxId = (trx: string) => {
@@ -98,6 +119,26 @@ export default function CheckoutPage() {
           <Card className="max-w-md">
             <CardContent className="pt-6">
               <p className="text-center text-muted-foreground">Product not found</p>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (paymentMethods.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Card className="max-w-md">
+            <CardContent className="pt-6 text-center space-y-4">
+              <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto" />
+              <p className="text-muted-foreground">
+                Payment methods are currently unavailable. Please try again later or contact support.
+              </p>
+              <Button onClick={() => router.push('/contact')}>Contact Support</Button>
             </CardContent>
           </Card>
         </main>
@@ -140,13 +181,18 @@ export default function CheckoutPage() {
     e.preventDefault();
     setError('');
 
-    if (!validateBkashNumber(formData.bkashNumber)) {
-      setError('Invalid bKash number. Must be 11 digits starting with 01.');
+    if (!selectedMethod) {
+      setError('Please select a payment method.');
+      return;
+    }
+
+    if (!validateSenderNumber(formData.senderNumber)) {
+      setError('Invalid phone number. Must be 11 digits starting with 01.');
       return;
     }
 
     if (!validateReference(formData.reference)) {
-      setError('Reference must be "E-book", otherwise product will not be delivered. / Reference অবশ্যই E-book লিখতে হবে—না হলে প্রোডাক্ট ডেলিভারি/অ্যাক্সেস পাওয়া যাবে না।');
+      setError(`Reference must be "${selectedMethod.required_reference}", otherwise product will not be delivered.`);
       return;
     }
 
@@ -164,9 +210,10 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           productId: product.id,
           customerName: formData.name,
-          bkashNumber: formData.bkashNumber,
+          senderNumber: formData.senderNumber,
           reference: formData.reference.trim(),
           trxid: formData.trxid.trim(),
+          paymentMethod: selectedMethod.method_name,
         }),
       });
 
@@ -185,6 +232,8 @@ export default function CheckoutPage() {
     }
   };
 
+  const colors = selectedMethod ? methodColors[selectedMethod.method_name] : methodColors.bkash;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -195,54 +244,84 @@ export default function CheckoutPage() {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Smartphone className="w-5 h-5 text-pink-500" />
-                    bKash Payment Instructions
-                  </CardTitle>
-                  <CardDescription>Follow these steps to complete your payment</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="bg-pink-50 dark:bg-pink-950/30 p-4 rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Send Money to:</p>
-                        <p className="text-2xl font-bold text-pink-600">{BKASH_NUMBER}</p>
+              {paymentMethods.length > 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Select Payment Method</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {paymentMethods.map((method) => (
+                        <Button
+                          key={method.id}
+                          variant={selectedMethod?.id === method.id ? "default" : "outline"}
+                          onClick={() => setSelectedMethod(method)}
+                          data-testid={`button-select-${method.method_name}`}
+                        >
+                          {method.display_name}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {selectedMethod && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Smartphone className={`w-5 h-5 ${colors.text}`} />
+                      {selectedMethod.display_name} Payment Instructions
+                    </CardTitle>
+                    <CardDescription>Follow these steps to complete your payment</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className={`${colors.bg} p-4 rounded-lg space-y-3`}>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Send Money to:</p>
+                          <p className={`text-2xl font-bold ${colors.text}`} data-testid="text-payment-number">
+                            {selectedMethod.account_number}
+                          </p>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={copyAccountNumber}
+                          data-testid="button-copy-number"
+                        >
+                          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          {copied ? 'Copied!' : 'Copy'}
+                        </Button>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={copyBkashNumber}
-                        data-testid="button-copy-bkash"
-                      >
-                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        {copied ? 'Copied!' : 'Copy'}
-                      </Button>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Amount:</p>
+                        <p className="text-xl font-bold">{formatPrice(product.price)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Amount:</p>
-                      <p className="text-xl font-bold">{formatPrice(product.price)}</p>
-                    </div>
-                  </div>
 
-                  <ol className="list-decimal list-inside space-y-2 text-sm">
-                    <li>Open bKash app and go to <strong>Send Money</strong></li>
-                    <li>Enter the bKash number: <strong>{BKASH_NUMBER}</strong></li>
-                    <li>Enter the exact amount: <strong>{formatPrice(product.price)}</strong></li>
-                    <li>In Reference field, write: <strong className="text-pink-600">E-book</strong></li>
-                    <li>Complete the payment and note the Transaction ID (TrxID)</li>
-                    <li>Fill the form below with your payment details</li>
-                  </ol>
+                    <ol className="list-decimal list-inside space-y-2 text-sm">
+                      <li>Open {selectedMethod.display_name} app and go to <strong>Send Money</strong></li>
+                      <li>Enter the number: <strong data-testid="text-instruction-number">{selectedMethod.account_number}</strong></li>
+                      <li>Enter the exact amount: <strong>{formatPrice(product.price)}</strong></li>
+                      <li>In Reference field, write: <strong className={colors.text}>{selectedMethod.required_reference}</strong></li>
+                      <li>Complete the payment and note the Transaction ID (TrxID)</li>
+                      <li>Fill the form below with your payment details</li>
+                    </ol>
 
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="text-sm">
-                      <strong>Important:</strong> Reference must be exactly "E-book" otherwise your purchase will not be processed.
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
+                    {selectedMethod.instructions && (
+                      <p className="text-sm text-muted-foreground">{selectedMethod.instructions}</p>
+                    )}
+
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        <strong>Important:</strong> Reference must be exactly "{selectedMethod.required_reference}" otherwise your purchase will not be processed.
+                      </AlertDescription>
+                    </Alert>
+                  </CardContent>
+                </Card>
+              )}
 
               <Card>
                 <CardHeader>
@@ -271,15 +350,15 @@ export default function CheckoutPage() {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="bkashNumber">Your bKash Account Number *</Label>
+                      <Label htmlFor="senderNumber">Your {selectedMethod?.display_name || 'Mobile'} Number *</Label>
                       <Input
-                        id="bkashNumber"
+                        id="senderNumber"
                         type="tel"
                         required
                         placeholder="01XXXXXXXXX"
-                        value={formData.bkashNumber}
-                        onChange={(e) => setFormData({ ...formData, bkashNumber: e.target.value })}
-                        data-testid="input-bkash-number"
+                        value={formData.senderNumber}
+                        onChange={(e) => setFormData({ ...formData, senderNumber: e.target.value })}
+                        data-testid="input-sender-number"
                       />
                       <p className="text-xs text-muted-foreground">The number you sent money from</p>
                     </div>
@@ -289,12 +368,12 @@ export default function CheckoutPage() {
                       <Input
                         id="reference"
                         required
-                        placeholder="E-book"
+                        placeholder={selectedMethod?.required_reference || 'E-book'}
                         value={formData.reference}
                         onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
                         data-testid="input-reference"
                       />
-                      <p className="text-xs text-muted-foreground">Must be exactly "E-book"</p>
+                      <p className="text-xs text-muted-foreground">Must be exactly "{selectedMethod?.required_reference || 'E-book'}"</p>
                     </div>
                     
                     <div className="space-y-2">
@@ -307,14 +386,14 @@ export default function CheckoutPage() {
                         onChange={(e) => setFormData({ ...formData, trxid: e.target.value })}
                         data-testid="input-trxid"
                       />
-                      <p className="text-xs text-muted-foreground">Found in your bKash transaction receipt</p>
+                      <p className="text-xs text-muted-foreground">Found in your transaction receipt</p>
                     </div>
                     
                     <Button 
                       type="submit" 
                       className="w-full" 
                       size="lg"
-                      disabled={loading}
+                      disabled={loading || !selectedMethod}
                       data-testid="button-submit-payment"
                     >
                       {loading ? (
@@ -355,11 +434,11 @@ export default function CheckoutPage() {
                   </div>
                   
                   <div className="border-t pt-4 space-y-2">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-muted-foreground">Subtotal</span>
                       <span>{formatPrice(product.price)}</span>
                     </div>
-                    <div className="flex justify-between font-bold text-lg">
+                    <div className="flex justify-between gap-2 font-bold text-lg">
                       <span>Total</span>
                       <span data-testid="text-total-amount">{formatPrice(product.price)}</span>
                     </div>

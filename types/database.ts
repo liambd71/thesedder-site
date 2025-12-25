@@ -1,6 +1,19 @@
 export type ProductType = 'ebook' | 'course';
 export type OrderStatus = 'pending_verification' | 'paid' | 'rejected' | 'cancelled';
-export type PaymentMethod = 'bkash';
+export type PaymentMethod = 'bkash' | 'nagad' | 'rocket';
+
+export interface PaymentSetting {
+  id: string;
+  method_name: PaymentMethod;
+  display_name: string;
+  account_number: string;
+  required_reference: string;
+  instructions: string | null;
+  is_enabled: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface Profile {
   id: string;
@@ -57,7 +70,7 @@ export interface Order {
   payment_method: PaymentMethod;
   customer_name: string;
   customer_email: string;
-  bkash_number: string;
+  sender_number: string;
   reference: string;
   trxid: string;
   rejection_reason: string | null;
@@ -116,6 +129,11 @@ export interface Database {
         Row: ContactMessage;
         Insert: Omit<ContactMessage, 'id' | 'created_at'>;
         Update: Partial<Omit<ContactMessage, 'id'>>;
+      };
+      payment_settings: {
+        Row: PaymentSetting;
+        Insert: Omit<PaymentSetting, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<PaymentSetting, 'id'>>;
       };
     };
   };
