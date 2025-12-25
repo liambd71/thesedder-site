@@ -89,7 +89,7 @@ function FAQItemCard({
       transition={{ duration: 0.4, delay: index * 0.1 }}
     >
       <Card 
-        className="overflow-visible transition-shadow duration-300 hover:shadow-md cursor-pointer"
+        className="overflow-visible transition-all duration-300 hover:shadow-md hover:scale-[1.01] cursor-pointer"
         onClick={onToggle}
         data-testid={`faq-item-${index}`}
       >
