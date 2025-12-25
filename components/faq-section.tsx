@@ -30,7 +30,7 @@ const faqs = [
   },
 ];
 
-const WHATSAPP_NUMBER = "8801925545557";
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "8801925545557";
 
 function FAQItem({ 
   faq, 

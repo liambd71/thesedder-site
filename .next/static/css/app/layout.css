@@ -844,6 +844,9 @@ video {
     max-width: 1536px;
   }
 }
+.visible {
+  visibility: visible;
+}
 .absolute {
   position: absolute;
 }
@@ -918,11 +921,20 @@ video {
 .mt-1 {
   margin-top: 0.25rem;
 }
+.mt-10 {
+  margin-top: 2.5rem;
+}
 .mt-12 {
   margin-top: 3rem;
 }
+.mt-2 {
+  margin-top: 0.5rem;
+}
 .mt-4 {
   margin-top: 1rem;
+}
+.mt-6 {
+  margin-top: 1.5rem;
 }
 .line-clamp-2 {
   overflow: hidden;
@@ -1433,6 +1445,9 @@ video {
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));
 }
+.text-muted-foreground\/30 {
+  color: hsl(var(--muted-foreground) / 0.3);
+}
 .text-orange-600 {
   --tw-text-opacity: 1;
   color: rgb(234 88 12 / var(--tw-text-opacity, 1));
@@ -1506,6 +1521,11 @@ video {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
 .transition-colors {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -1524,6 +1544,9 @@ video {
 .duration-300 {
   transition-duration: 300ms;
 }
+.duration-500 {
+  transition-duration: 500ms;
+}
 @keyframes enter {
 
   from {
@@ -1540,6 +1563,9 @@ video {
 }
 .duration-300 {
   animation-duration: 300ms;
+}
+.duration-500 {
+  animation-duration: 500ms;
 }
 
 .prose {

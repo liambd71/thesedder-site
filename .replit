@@ -42,3 +42,4 @@ waitForPort = 5000
 
 [userenv.shared]
 SSLCOMMERZ_IS_LIVE = "false"
+NEXT_PUBLIC_WHATSAPP_NUMBER = "8801925545557"

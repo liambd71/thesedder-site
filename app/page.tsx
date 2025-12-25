@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { FAQSection } from "@/components/faq-section";
-import { BookOpen, PlayCircle, Star, ShieldCheck, Users } from "lucide-react";
+import { TestimonialsRotating } from "@/components/testimonials-rotating";
+import { BookOpen, PlayCircle, ShieldCheck, Users } from "lucide-react";
 
 const features = [
   {
@@ -29,26 +30,6 @@ const features = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Sarah Johnson",
-    role: "Software Developer",
-    content: "The courses on TheSedder have transformed my career. The quality is exceptional!",
-    rating: 5,
-  },
-  {
-    name: "Ahmed Khan",
-    role: "Student",
-    content: "Best investment I've made in my education. The eBooks are comprehensive and well-written.",
-    rating: 5,
-  },
-  {
-    name: "Emily Chen",
-    role: "Designer",
-    content: "Love the variety of content available. The video courses are engaging and practical.",
-    rating: 5,
-  },
-];
 
 
 export default function HomePage() {
@@ -99,29 +80,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="py-16 md:py-24 bg-muted/50">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">What Our Learners Say</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {testimonials.map((testimonial) => (
-                <Card key={testimonial.name}>
-                  <CardContent className="pt-6">
-                    <div className="flex gap-1 mb-4">
-                      {Array.from({ length: testimonial.rating }).map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </div>
-                    <p className="text-muted-foreground mb-4">"{testimonial.content}"</p>
-                    <div>
-                      <p className="font-semibold">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
+        <TestimonialsRotating />
 
         <FAQSection />
 
