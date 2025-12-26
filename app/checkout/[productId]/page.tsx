@@ -42,7 +42,7 @@ export default function CheckoutPage() {
   const [copied, setCopied] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-  
+
   const [formData, setFormData] = useState({
     name: '',
     senderNumber: '',
@@ -55,35 +55,34 @@ export default function CheckoutPage() {
       try {
         const [productRes, settingsRes] = await Promise.all([
           fetch(`/api/products/${productId}`),
-          fetch('/api/payment/settings')
+          fetch('/api/payment/settings'),
         ]);
-        
+
         if (productRes.ok) {
-          const productData = await productRes.json();
+          const productData: Product = await productRes.json();
           setProduct(productData);
         }
-        
+
         if (settingsRes.ok) {
-  const settingsData = await settingsRes.json();
+          const settingsData = await settingsRes.json();
 
-  // ✅ API কখনও settings নামে দিবে, কখনও paymentMethods নামে
-  const methods = (settingsData.settings ?? settingsData.paymentMethods ?? []).filter(
-    (m: any) => m?.is_active === true && (m?.is_enabled ?? true) === true
-  );
+          // API কখনও settings নামে, কখনও paymentMethods নামে দেয়
+          const methods: PaymentSetting[] = (
+            settingsData.settings ?? settingsData.paymentMethods ?? []
+          ).filter(
+            (m: any) => m?.is_active === true && (m?.is_enabled ?? true) === true
+          );
 
-  if (settingsData.success && methods.length > 0) {
-    setPaymentMethods(methods);
-    setSelectedMethod(methods[0]);
-  } else {
-    setPaymentMethods([]);
-    setSelectedMethod(null);
-  }
-}
-
+          if (settingsData.success && methods.length > 0) {
+            setPaymentMethods(methods);
+            setSelectedMethod(methods[0]);
+          } else {
+            setPaymentMethods([]);
+            setSelectedMethod(null);
           }
         }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
       } finally {
         setPageLoading(false);
       }
@@ -98,18 +97,14 @@ export default function CheckoutPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const validateSenderNumber = (num: string) => {
-    return /^01[3-9]\d{8}$/.test(num);
-  };
+  const validateSenderNumber = (num: string) => /^01[3-9]\d{8}$/.test(num);
 
   const validateReference = (ref: string) => {
-    if (!selectedMethod) return false;
+    if (!selectedMethod?.required_reference) return false;
     return ref.toLowerCase().trim() === selectedMethod.required_reference.toLowerCase();
   };
 
-  const validateTrxId = (trx: string) => {
-    return /^[A-Za-z0-9]{8,}$/.test(trx.trim());
-  };
+  const validateTrxId = (trx: string) => /^[A-Za-z0-9]{8,}$/.test(trx.trim());
 
   if (pageLoading) {
     return (
@@ -176,9 +171,7 @@ export default function CheckoutPage() {
                   Verification usually takes 1-24 hours during business hours.
                 </p>
                 <div className="pt-4">
-                  <Button onClick={() => router.push('/shop')}>
-                    Continue Shopping
-                  </Button>
+                  <Button onClick={() => router.push('/shop')}>Continue Shopping</Button>
                 </div>
               </CardContent>
             </Card>
@@ -204,7 +197,9 @@ export default function CheckoutPage() {
     }
 
     if (!validateReference(formData.reference)) {
-      setError(`Reference must be "${selectedMethod.required_reference}", otherwise product will not be delivered.`);
+      setError(
+        `Reference must be "${selectedMethod.required_reference}", otherwise product will not be delivered.`
+      );
       return;
     }
 
@@ -216,6 +211,10 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
+      const methodKeyToSend =
+        (selectedMethod as any).method_name ??
+        (selectedMethod as any).method; // যেটা আছে সেটাই পাঠাও
+
       const response = await fetch('/api/payment/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -225,7 +224,7 @@ export default function CheckoutPage() {
           senderNumber: formData.senderNumber,
           reference: formData.reference.trim(),
           trxid: formData.trxid.trim(),
-          paymentMethod: selectedMethod.method_name,
+          paymentMethod: methodKeyToSend,
         }),
       });
 
@@ -237,23 +236,31 @@ export default function CheckoutPage() {
         setError(data.error || 'Failed to submit payment. Please try again.');
         setLoading(false);
       }
-    } catch (error) {
-      console.error('Checkout error:', error);
+    } catch (err) {
+      console.error('Checkout error:', err);
       setError('Something went wrong. Please try again.');
       setLoading(false);
     }
   };
 
-  const colors = selectedMethod ? methodColors[selectedMethod.method_name] : methodColors.bkash;
+  // UI রঙের জন্য method key resolve
+  const uiMethodKey =
+    ((selectedMethod as any)?.method_name ??
+      (selectedMethod as any)?.method ??
+      'bkash') as PaymentMethod;
+
+  const colors = methodColors[uiMethodKey];
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       <main className="flex-1 py-12">
         <div className="container mx-auto px-4 max-w-4xl">
-          <h1 className="text-3xl font-bold mb-8" data-testid="text-checkout-title">Checkout</h1>
-          
+          <h1 className="text-3xl font-bold mb-8" data-testid="text-checkout-title">
+            Checkout
+          </h1>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
               {paymentMethods.length > 1 && (
@@ -263,16 +270,21 @@ export default function CheckoutPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {paymentMethods.map((method) => (
-                        <Button
-                          key={method.id}
-                          variant={selectedMethod?.id === method.id ? "default" : "outline"}
-                          onClick={() => setSelectedMethod(method)}
-                          data-testid={`button-select-${method.method_name}`}
-                        >
-                          {method.display_name}
-                        </Button>
-                      ))}
+                      {paymentMethods.map((method) => {
+                        const mKey = ((method as any).method_name ??
+                          (method as any).method ??
+                          'bkash') as PaymentMethod;
+                        return (
+                          <Button
+                            key={method.id}
+                            variant={selectedMethod?.id === method.id ? 'default' : 'outline'}
+                            onClick={() => setSelectedMethod(method)}
+                            data-testid={`button-select-${mKey}`}
+                          >
+                            {method.display_name}
+                          </Button>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
@@ -296,9 +308,9 @@ export default function CheckoutPage() {
                             {selectedMethod.account_number}
                           </p>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={copyAccountNumber}
                           data-testid="button-copy-number"
                         >
@@ -313,10 +325,20 @@ export default function CheckoutPage() {
                     </div>
 
                     <ol className="list-decimal list-inside space-y-2 text-sm">
-                      <li>Open {selectedMethod.display_name} app and go to <strong>Send Money</strong></li>
-                      <li>Enter the number: <strong data-testid="text-instruction-number">{selectedMethod.account_number}</strong></li>
-                      <li>Enter the exact amount: <strong>{formatPrice(product.price)}</strong></li>
-                      <li>In Reference field, write: <strong className={colors.text}>{selectedMethod.required_reference}</strong></li>
+                      <li>
+                        Open {selectedMethod.display_name} app and go to <strong>Send Money</strong>
+                      </li>
+                      <li>
+                        Enter the number:{' '}
+                        <strong data-testid="text-instruction-number">{selectedMethod.account_number}</strong>
+                      </li>
+                      <li>
+                        Enter the exact amount: <strong>{formatPrice(product.price)}</strong>
+                      </li>
+                      <li>
+                        In Reference field, write:{' '}
+                        <strong className={colors.text}>{selectedMethod.required_reference}</strong>
+                      </li>
                       <li>Complete the payment and note the Transaction ID (TrxID)</li>
                       <li>Fill the form below with your payment details</li>
                     </ol>
@@ -328,7 +350,8 @@ export default function CheckoutPage() {
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription className="text-sm">
-                        <strong>Important:</strong> Reference must be exactly "{selectedMethod.required_reference}" otherwise your purchase will not be processed.
+                        <strong>Important:</strong> Reference must be exactly "
+                        {selectedMethod.required_reference}" otherwise your purchase will not be processed.
                       </AlertDescription>
                     </Alert>
                   </CardContent>
@@ -360,9 +383,11 @@ export default function CheckoutPage() {
                         data-testid="input-customer-name"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="senderNumber">Your {selectedMethod?.display_name || 'Mobile'} Number *</Label>
+                      <Label htmlFor="senderNumber">
+                        Your {selectedMethod?.display_name || 'Mobile'} Number *
+                      </Label>
                       <Input
                         id="senderNumber"
                         type="tel"
@@ -374,7 +399,7 @@ export default function CheckoutPage() {
                       />
                       <p className="text-xs text-muted-foreground">The number you sent money from</p>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="reference">Reference *</Label>
                       <Input
@@ -385,9 +410,11 @@ export default function CheckoutPage() {
                         onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
                         data-testid="input-reference"
                       />
-                      <p className="text-xs text-muted-foreground">Must be exactly "{selectedMethod?.required_reference || 'E-book'}"</p>
+                      <p className="text-xs text-muted-foreground">
+                        Must be exactly "{selectedMethod?.required_reference || 'E-book'}"
+                      </p>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="trxid">Transaction ID (TrxID) *</Label>
                       <Input
@@ -400,10 +427,10 @@ export default function CheckoutPage() {
                       />
                       <p className="text-xs text-muted-foreground">Found in your transaction receipt</p>
                     </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
+
+                    <Button
+                      type="submit"
+                      className="w-full"
                       size="lg"
                       disabled={loading || !selectedMethod}
                       data-testid="button-submit-payment"
@@ -421,7 +448,7 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
             </div>
-            
+
             <div>
               <Card className="sticky top-24">
                 <CardHeader>
@@ -437,14 +464,16 @@ export default function CheckoutPage() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold" data-testid="text-product-title">{product.title}</h3>
+                      <h3 className="font-semibold" data-testid="text-product-title">
+                        {product.title}
+                      </h3>
                       <p className="text-sm text-muted-foreground">{product.author}</p>
                       <Badge variant="secondary" className="mt-1">
                         {product.type === 'course' ? 'Course' : 'eBook'}
                       </Badge>
                     </div>
                   </div>
-                  
+
                   <div className="border-t pt-4 space-y-2">
                     <div className="flex justify-between gap-2">
                       <span className="text-muted-foreground">Subtotal</span>
