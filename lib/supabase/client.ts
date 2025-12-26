@@ -1,13 +1,17 @@
-import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/types/database'
+// /lib/supabase/client.ts
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+export function createClient(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return null
+  
+  if (!url || !anonKey) {
+    throw new Error(
+      "Missing Supabase env: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    );
   }
 
-  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
+  return createBrowserClient(url, anonKey);
 }
