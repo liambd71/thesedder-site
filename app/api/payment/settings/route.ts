@@ -19,10 +19,13 @@ export async function GET(_request: NextRequest) {
       .from("payment_settings")
       .select("*")
       .eq('is_active', true)
+    
+ const { data, error } = await supabase
+  .from("payment_settings")
+  .select("*")
+  .eq("is_active", true)
+  .order("created_at", { ascending: false }); // updated_at বাদ
 
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
 
     if (error) {
       return NextResponse.json(
