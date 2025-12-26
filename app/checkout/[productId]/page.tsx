@@ -64,10 +64,22 @@ export default function CheckoutPage() {
         }
         
         if (settingsRes.ok) {
-          const settingsData = await settingsRes.json();
-          if (settingsData.success && settingsData.paymentMethods?.length > 0) {
-            setPaymentMethods(settingsData.paymentMethods);
-            setSelectedMethod(settingsData.paymentMethods[0]);
+  const settingsData = await settingsRes.json();
+
+  // ✅ API কখনও settings নামে দিবে, কখনও paymentMethods নামে
+  const methods = (settingsData.settings ?? settingsData.paymentMethods ?? []).filter(
+    (m: any) => m?.is_active === true && (m?.is_enabled ?? true) === true
+  );
+
+  if (settingsData.success && methods.length > 0) {
+    setPaymentMethods(methods);
+    setSelectedMethod(methods[0]);
+  } else {
+    setPaymentMethods([]);
+    setSelectedMethod(null);
+  }
+}
+
           }
         }
       } catch (error) {
