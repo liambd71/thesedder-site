@@ -66,15 +66,17 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-const updatePayload: any = {
+const updatePayload = {
   status: "paid",
   verified_by: user?.id || null,
   verified_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
 
-const { error: updateError } = await supabase
-  .from("orders")
+// 🔥 cast the table builder, not the payload
+const ordersTable = supabase.from("orders") as any;
+
+const { error: updateError } = await ordersTable
   .update(updatePayload)
   .eq("id", orderId);
 
