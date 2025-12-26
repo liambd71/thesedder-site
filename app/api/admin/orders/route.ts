@@ -1,23 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getProductById } from "@/lib/products";
 
 export const runtime = "nodejs";
+
+const rejectSchema = z.object({
+  orderId: z.string().uuid("Invalid order ID"),
+  reason: z.string().min(1, "Reason is required").max(500, "Reason too long"),
+});
 
 type OrderRow = {
   id: string;
   status: string;
-  user_id: string | null;
-  product_id: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
 };
 
-export async function GET(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
+    const body = await request.json().catch(() => null);
+
+    const validation = rejectSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors[0]?.message || "Invalid input" },
+        { status: 400 }
+      );
+    }
+
+    const { orderId, reason } = validation.data;
+
     const supabase = await createClient();
 
-    // optional: require logged-in user (admin panel)
+    // require logged-in user
     const { data: authData, error: authErr } = await supabase.auth.getUser();
     if (authErr) {
       return NextResponse.json({ error: authErr.message }, { status: 500 });
@@ -26,29 +39,54 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data, error } = await supabase
+    // fetch order
+    const orderResult = await supabase
       .from("orders")
-      .select("id,status,user_id,product_id,created_at,updated_at")
-      .order("created_at", { ascending: false });
+      .select("id,status")
+      .eq("id", orderId)
+      .maybeSingle();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (orderResult.error) {
+      return NextResponse.json(
+        { error: orderResult.error.message },
+        { status: 500 }
+      );
     }
 
-    const orders = (data ?? []) as unknown as OrderRow[];
+    const order = orderResult.data as unknown as OrderRow | null;
 
-    const ordersWithProducts = orders.map((order) => {
-      const product = order.product_id ? getProductById(order.product_id) : null;
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
 
-      return {
-        ...order,
-        product: product ? { title: product.title, type: product.type } : null,
-      };
-    });
+    if (order.status !== "pending_verification") {
+      return NextResponse.json(
+        { error: "Order is not pending verification" },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({ success: true, orders: ordersWithProducts });
+    const ordersTable = supabase.from("orders") as any;
+
+    const { error: updateError } = await ordersTable
+      .update({
+        status: "rejected",
+        rejection_reason: reason,
+        rejected_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId);
+
+    if (updateError) {
+      return NextResponse.json(
+        { error: "Failed to reject order" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
   } catch (e) {
-    console.error("Admin orders GET error:", e);
+    console.error("Reject order error:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
