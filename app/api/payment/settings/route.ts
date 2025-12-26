@@ -7,7 +7,7 @@ export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // 🔐 CRITICAL FIX (এইটা না থাকলেই error)
+    // safety check
     if (!supabase) {
       return NextResponse.json(
         { error: "Database not available" },
@@ -18,14 +18,8 @@ export async function GET(_request: NextRequest) {
     const { data, error } = await supabase
       .from("payment_settings")
       .select("*")
-      .eq('is_active', true)
-    
- const { data, error } = await supabase
-  .from("payment_settings")
-  .select("*")
-  .eq("is_active", true)
-  .order("created_at", { ascending: false }); // updated_at বাদ
-
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
 
     if (error) {
       return NextResponse.json(
@@ -36,7 +30,7 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      settings: data ?? null,
+      settings: data ?? [],
     });
   } catch (err) {
     console.error("Payment settings error:", err);
