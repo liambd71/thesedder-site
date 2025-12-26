@@ -1,46 +1,54 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { getProductById } from '@/lib/products';
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getProductById } from "@/lib/products";
 
-export async function GET(request: NextRequest) {
+export const runtime = "nodejs";
+
+type OrderRow = {
+  id: string;
+  status: string;
+  user_id: string | null;
+  product_id: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
-    
-    if (!supabase) {
-      return NextResponse.json({ error: 'Database not available' }, { status: 500 });
+
+    // optional: require logged-in user (admin panel)
+    const { data: authData, error: authErr } = await supabase.auth.getUser();
+    if (authErr) {
+      return NextResponse.json({ error: authErr.message }, { status: 500 });
+    }
+    if (!authData?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') || 'pending';
-
-    let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
-
-    if (status === 'pending') {
-      query = query.eq('status', 'pending_verification');
-    } else if (status === 'paid') {
-      query = query.eq('status', 'paid');
-    } else if (status === 'rejected') {
-      query = query.eq('status', 'rejected');
-    }
-
-    const { data: orders, error } = await query.limit(100);
+    const { data, error } = await supabase
+      .from("orders")
+      .select("id,status,user_id,product_id,created_at,updated_at")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Error fetching orders:', error);
-      return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const ordersWithProducts = (orders || []).map(order => {
-      const product = getProductById(order.product_id);
+    const orders = (data ?? []) as unknown as OrderRow[];
+
+    const ordersWithProducts = orders.map((order) => {
+      const product = order.product_id ? getProductById(order.product_id) : null;
+
       return {
         ...order,
         product: product ? { title: product.title, type: product.type } : null,
       };
     });
 
-    return NextResponse.json({ orders: ordersWithProducts });
-  } catch (error) {
-    console.error('Admin orders error:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: true, orders: ordersWithProducts });
+  } catch (e) {
+    console.error("Admin orders GET error:", e);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
