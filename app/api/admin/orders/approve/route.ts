@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
+export const runtime = "nodejs";
+
 const approveSchema = z.object({
   orderId: z.string().uuid("Invalid order ID"),
 });
@@ -10,12 +12,12 @@ type OrderRow = {
   id: string;
   status: string;
   user_id: string | null;
-  product_id: string;
+  product_id: string | null;
 };
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
 
     const validation = approveSchema.safeParse(body);
     if (!validation.success) {
@@ -29,19 +31,16 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // ✅ Some projects type this as SupabaseClient | null
-    if (!supabase) {
-      return NextResponse.json(
-        { error: "Database not available" },
-        { status: 500 }
-      );
+    // require logged-in user
+    const { data: authData, error: authErr } = await supabase.auth.getUser();
+    if (authErr) {
+      return NextResponse.json({ error: authErr.message }, { status: 500 });
+    }
+    if (!authData?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    // ✅ fetch order (minimal columns)
+    // fetch order
     const orderResult = await supabase
       .from("orders")
       .select("id,status,user_id,product_id")
@@ -55,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const order = orderResult.data as OrderRow | null;
+    const order = orderResult.data as unknown as OrderRow | null;
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -68,38 +67,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ✅ update order (cast table builder to avoid "never" typing on untyped supabase client)
+    // IMPORTANT: Supabase generated types না থাকলে `.update()`/`.insert()` এ "never" আসে
+    // তাই এখানে table builder কে any করে নেওয়া হয়েছে।
     const ordersTable = supabase.from("orders") as any;
 
     const { error: updateError } = await ordersTable
       .update({
         status: "paid",
-        verified_by: user?.id || null,
+        verified_by: authData.user.id,
         verified_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq("id", orderId);
 
     if (updateError) {
-      console.error("Error updating order:", updateError);
       return NextResponse.json(
         { error: "Failed to approve order" },
         { status: 500 }
       );
     }
 
-    // ✅ create purchase record if missing
-    if (order.user_id) {
-      const existingPurchaseResult = await supabase
-        .from("purchases")
+    // create purchase (if order has user_id & product_id)
+    if (order.user_id && order.product_id) {
+      const purchasesTable = supabase.from("purchases") as any;
+
+      // check existing
+      const existing = await purchasesTable
         .select("id")
         .eq("user_id", order.user_id)
         .eq("product_id", order.product_id)
         .maybeSingle();
 
-      if (!existingPurchaseResult.data) {
-        const purchasesTable = supabase.from("purchases") as any;
-
+      // if not found -> insert
+      if (!existing?.data) {
         const { error: insertError } = await purchasesTable.insert({
           user_id: order.user_id,
           product_id: order.product_id,
@@ -108,15 +108,15 @@ export async function POST(request: NextRequest) {
         });
 
         if (insertError) {
-          console.error("Error inserting purchase:", insertError);
-          // Order approve already succeeded; keep response success.
+          // purchase insert fail হলেও order approved হয়েছে — তাই 500 না দিয়ে log করলাম
+          console.error("Purchase insert error:", insertError);
         }
       }
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Approve order error:", error);
+  } catch (e) {
+    console.error("Approve order error:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
