@@ -7,7 +7,7 @@ export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // ✅ MUST: null check
+    // 🔐 CRITICAL FIX (এইটা না থাকলেই error)
     if (!supabase) {
       return NextResponse.json(
         { error: "Database not available" },
@@ -24,12 +24,21 @@ export async function GET(_request: NextRequest) {
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ success: true, settings: data ?? null });
-  } catch (e) {
-    console.error("Payment settings route error:", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      settings: data ?? null,
+    });
+  } catch (err) {
+    console.error("Payment settings error:", err);
+    return NextResponse.json(
+      { error: "Server error" },
+      { status: 500 }
+    );
   }
 }
