@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // ✅ fix: TS says supabase can be null
+    // ✅ Some projects type this as SupabaseClient | null
     if (!supabase) {
       return NextResponse.json(
         { error: "Database not available" },
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
+    // ✅ fetch order (minimal columns)
     const orderResult = await supabase
       .from("orders")
       .select("id,status,user_id,product_id")
@@ -66,20 +67,18 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-const updatePayload = {
-  status: "paid",
-  verified_by: user?.id || null,
-  verified_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
 
-// 🔥 cast the table builder, not the payload
-const ordersTable = supabase.from("orders") as any;
+    // ✅ update order (cast table builder to avoid "never" typing on untyped supabase client)
+    const ordersTable = supabase.from("orders") as any;
 
-const { error: updateError } = await ordersTable
-  .update(updatePayload)
-  .eq("id", orderId);
-
+    const { error: updateError } = await ordersTable
+      .update({
+        status: "paid",
+        verified_by: user?.id || null,
+        verified_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId);
 
     if (updateError) {
       console.error("Error updating order:", updateError);
@@ -89,7 +88,7 @@ const { error: updateError } = await ordersTable
       );
     }
 
-    // ✅ create purchase if missing
+    // ✅ create purchase record if missing
     if (order.user_id) {
       const existingPurchaseResult = await supabase
         .from("purchases")
@@ -99,18 +98,18 @@ const { error: updateError } = await ordersTable
         .maybeSingle();
 
       if (!existingPurchaseResult.data) {
-        const { error: insertError } = await supabase
-          .from("purchases")
-          .insert({
-            user_id: order.user_id,
-            product_id: order.product_id,
-            order_id: order.id,
-            purchased_at: new Date().toISOString(),
-          });
+        const purchasesTable = supabase.from("purchases") as any;
+
+        const { error: insertError } = await purchasesTable.insert({
+          user_id: order.user_id,
+          product_id: order.product_id,
+          order_id: order.id,
+          purchased_at: new Date().toISOString(),
+        });
 
         if (insertError) {
           console.error("Error inserting purchase:", insertError);
-          // Purchase insert fail হলেও order approve হয়ে গেছে—তাই error না দেখিয়ে success রাখছি
+          // Order approve already succeeded; keep response success.
         }
       }
     }
