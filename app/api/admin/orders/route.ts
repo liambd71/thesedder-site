@@ -1,34 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-const rejectSchema = z.object({
-  orderId: z.string().uuid("Invalid order ID"),
-  reason: z.string().min(1, "Reason is required").max(500, "Reason too long"),
-});
-
 type OrderRow = {
   id: string;
   status: string;
+  user_id: string | null;
+  product_id: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
-export async function POST(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const body = await request.json().catch(() => null);
+    const supabase = await createClient();
 
-    const validation = rejectSchema.safeParse(body);
-    if (!validation.success) {
+    // ✅ null check (এইটাই তোমার error fix করবে)
+    if (!supabase) {
       return NextResponse.json(
-        { error: validation.error.errors[0]?.message || "Invalid input" },
-        { status: 400 }
+        { error: "Database not available" },
+        { status: 500 }
       );
     }
-
-    const { orderId, reason } = validation.data;
-
-    const supabase = await createClient();
 
     // require logged-in user
     const { data: authData, error: authErr } = await supabase.auth.getUser();
@@ -39,54 +33,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // fetch order
-    const orderResult = await supabase
+    // fetch orders (admin page er jonno)
+    const ordersRes = await supabase
       .from("orders")
-      .select("id,status")
-      .eq("id", orderId)
-      .maybeSingle();
+      .select("id,status,user_id,product_id,created_at,updated_at")
+      .order("created_at", { ascending: false });
 
-    if (orderResult.error) {
+    if (ordersRes.error) {
       return NextResponse.json(
-        { error: orderResult.error.message },
+        { error: ordersRes.error.message },
         { status: 500 }
       );
     }
 
-    const order = orderResult.data as unknown as OrderRow | null;
+    const orders = (ordersRes.data ?? []) as unknown as OrderRow[];
 
-    if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
-
-    if (order.status !== "pending_verification") {
-      return NextResponse.json(
-        { error: "Order is not pending verification" },
-        { status: 400 }
-      );
-    }
-
-    const ordersTable = supabase.from("orders") as any;
-
-    const { error: updateError } = await ordersTable
-      .update({
-        status: "rejected",
-        rejection_reason: reason,
-        rejected_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", orderId);
-
-    if (updateError) {
-      return NextResponse.json(
-        { error: "Failed to reject order" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, orders });
   } catch (e) {
-    console.error("Reject order error:", e);
+    console.error("Admin orders GET error:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
