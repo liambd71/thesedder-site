@@ -1,16 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
 
-    // safety check
     if (!supabase) {
       return NextResponse.json(
-        { error: "Database not available" },
+        { success: false, error: "Database not available", settings: [] },
         { status: 500 }
       );
     }
@@ -23,7 +22,7 @@ export async function GET(_request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: error.message },
+        { success: false, error: error.message, settings: [] },
         { status: 500 }
       );
     }
@@ -35,7 +34,7 @@ export async function GET(_request: NextRequest) {
   } catch (err) {
     console.error("Payment settings error:", err);
     return NextResponse.json(
-      { error: "Server error" },
+      { success: false, error: "Server error", settings: [] },
       { status: 500 }
     );
   }
