@@ -1,128 +1,194 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
-import { BookOpen, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+    setErrorMsg(null);
+    setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    try {
+      const supabase = createClient();
 
-    const supabase = createClient();
-    
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      // ✅ if your createClient() can return null, handle it safely
+      if (!supabase) {
+        setErrorMsg("Supabase client not available");
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      setError(error.message);
-      setIsLoading(false);
-      return;
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setErrorMsg(error.message);
+        setLoading(false);
+        return;
+      }
+
+      router.push("/admin");
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Login failed");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/library");
-    router.refresh();
-  }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      
-      <main className="flex-1 flex items-center justify-center py-12 px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <BookOpen className="h-10 w-10 text-primary" />
-            </div>
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>
-              Sign in to your account to access your library
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                  {error}
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  required
-                  data-testid="input-email"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link 
-                    href="/forgot-password" 
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  data-testid="input-password"
-                />
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-                data-testid="button-login"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link href="/signup" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </p>
-          </CardFooter>
-        </Card>
-      </main>
+    <div style={{ maxWidth: 420, margin: "60px auto", padding: 16 }}>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>Login</h1>
 
-      <Footer />
+      <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
+        <div style={{ display: "grid", gap: 6 }}>
+          <label>Email</label>
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            required
+            style={{ padding: 10, border: "1px solid #ccc", borderRadius: 8 }}
+          />
+        </div>
+
+        <div style={{ display: "grid", gap: 6 }}>
+          <label>Password</label>
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            required
+            style={{ padding: 10, border: "1px solid #ccc", borderRadius: 8 }}
+          />
+        </div>
+
+        {errorMsg ? (
+          <div style={{ color: "red", fontSize: 14 }}>{errorMsg}</div>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            padding: 12,
+            borderRadius: 10,
+            border: "1px solid #000",
+            cursor: "pointer",
+          }}
+        >
+          {loading ? "Signing in..." : "Sign in"}
+        </button>
+      </form>
+    </div>
+  );
+}
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+export default function LoginPage() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setLoading(true);
+
+    try {
+      const supabase = createClient();
+
+      // ✅ if your createClient() can return null, handle it safely
+      if (!supabase) {
+        setErrorMsg("Supabase client not available");
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setErrorMsg(error.message);
+        setLoading(false);
+        return;
+      }
+
+      router.push("/admin");
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 420, margin: "60px auto", padding: 16 }}>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>Login</h1>
+
+      <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
+        <div style={{ display: "grid", gap: 6 }}>
+          <label>Email</label>
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            required
+            style={{ padding: 10, border: "1px solid #ccc", borderRadius: 8 }}
+          />
+        </div>
+
+        <div style={{ display: "grid", gap: 6 }}>
+          <label>Password</label>
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            required
+            style={{ padding: 10, border: "1px solid #ccc", borderRadius: 8 }}
+          />
+        </div>
+
+        {errorMsg ? (
+          <div style={{ color: "red", fontSize: 14 }}>{errorMsg}</div>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            padding: 12,
+            borderRadius: 10,
+            border: "1px solid #000",
+            cursor: "pointer",
+          }}
+        >
+          {loading ? "Signing in..." : "Sign in"}
+        </button>
+      </form>
     </div>
   );
 }
