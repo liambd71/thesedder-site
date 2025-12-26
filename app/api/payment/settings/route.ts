@@ -18,7 +18,8 @@ export async function GET(_request: NextRequest) {
     const { data, error } = await supabase
       .from("payment_settings")
       .select("*")
-      .eq("is_enabled", true)
+      .eq('is_active', true)
+
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
