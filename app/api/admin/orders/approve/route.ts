@@ -66,16 +66,18 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+const updatePayload: any = {
+  status: "paid",
+  verified_by: user?.id || null,
+  verified_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
 
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({
-        status: "paid",
-        verified_by: user?.id || null,
-        verified_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", orderId);
+const { error: updateError } = await supabase
+  .from("orders")
+  .update(updatePayload)
+  .eq("id", orderId);
+
 
     if (updateError) {
       console.error("Error updating order:", updateError);
