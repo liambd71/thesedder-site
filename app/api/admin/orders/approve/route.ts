@@ -31,6 +31,14 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
+    // ✅ IMPORTANT: null check (তোমার error এটাতেই হচ্ছে)
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Database not available" },
+        { status: 500 }
+      );
+    }
+
     // require logged-in user
     const { data: authData, error: authErr } = await supabase.auth.getUser();
     if (authErr) {
@@ -67,8 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // IMPORTANT: Supabase generated types না থাকলে `.update()`/`.insert()` এ "never" আসে
-    // তাই এখানে table builder কে any করে নেওয়া হয়েছে।
+    // bypass Supabase "never" typing
     const ordersTable = supabase.from("orders") as any;
 
     const { error: updateError } = await ordersTable
@@ -87,18 +94,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // create purchase (if order has user_id & product_id)
+    // create purchase (if possible)
     if (order.user_id && order.product_id) {
       const purchasesTable = supabase.from("purchases") as any;
 
-      // check existing
       const existing = await purchasesTable
         .select("id")
         .eq("user_id", order.user_id)
         .eq("product_id", order.product_id)
         .maybeSingle();
 
-      // if not found -> insert
       if (!existing?.data) {
         const { error: insertError } = await purchasesTable.insert({
           user_id: order.user_id,
@@ -108,7 +113,6 @@ export async function POST(request: NextRequest) {
         });
 
         if (insertError) {
-          // purchase insert fail হলেও order approved হয়েছে — তাই 500 না দিয়ে log করলাম
           console.error("Purchase insert error:", insertError);
         }
       }
